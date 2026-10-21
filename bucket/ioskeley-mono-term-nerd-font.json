@@ -1,0 +1,69 @@
+{
+  "version": "2.2.0",
+  "description": "Terminal programming font with Nerd Font icons (Normal width, both NF and NFM families).",
+  "homepage": "https://github.com/ahatem/IoskeleyMono",
+  "license": "OFL-1.1",
+  "url": "https://github.com/ahatem/IoskeleyMono/releases/download/v2.2.0/IoskeleyMono-Term-NerdFont.zip",
+  "hash": "25c601b1a561f73cbb0366931148861451a972463718d25e76bf869fd3d54754",
+  "extract_dir": "Normal",
+  "pre_install": [
+    "$build = [int](Get-ItemProperty 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion').CurrentBuildNumber",
+    "if (!$global -and $build -lt 17763) { throw 'Per-user font installation requires Windows 10 1809 or later. Use a global install on older systems.' }"
+  ],
+  "installer": {
+    "script": [
+      "$fontDir = if ($global) { Join-Path $env:WINDIR 'Fonts' } else { Join-Path $env:LOCALAPPDATA 'Microsoft\\Windows\\Fonts' }",
+      "$registryRoot = if ($global) { 'HKLM' } else { 'HKCU' }",
+      "$fontKey = \"${registryRoot}:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts\"",
+      "if (!(Test-Path -LiteralPath $fontDir)) { New-Item -ItemType Directory -Path $fontDir -ErrorAction Stop | Out-Null }",
+      "if (!(Test-Path -LiteralPath $fontKey)) { New-Item -Path $fontKey -Force -ErrorAction Stop | Out-Null }",
+      "if (!$global) {",
+      "    $acl = Get-Acl -LiteralPath $fontDir",
+      "    foreach ($sid in @('S-1-15-2-1', 'S-1-15-2-2')) {",
+      "        $rule = [System.Security.AccessControl.FileSystemAccessRule]::new([System.Security.Principal.SecurityIdentifier]::new($sid), 'ReadAndExecute', 'ContainerInherit,ObjectInherit', 'None', 'Allow')",
+      "        $acl.SetAccessRule($rule)",
+      "    }",
+      "    Set-Acl -LiteralPath $fontDir -AclObject $acl -ErrorAction Stop",
+      "}",
+      "$fonts = @(Get-ChildItem -LiteralPath $dir -Filter '*.ttf' -File)",
+      "if (!$fonts.Count) { throw 'No TTF files found. Check the release archive and extract_dir.' }",
+      "foreach ($font in $fonts) {",
+      "    $target = Join-Path $fontDir $font.Name",
+      "    Copy-Item -LiteralPath $font.FullName -Destination $target -Force -ErrorAction Stop",
+      "    $value = if ($global) { $font.Name } else { $target }",
+      "    New-ItemProperty -Path $fontKey -Name ($font.BaseName + ' (TrueType)') -Value $value -PropertyType String -Force -ErrorAction Stop | Out-Null",
+      "}"
+    ]
+  },
+  "pre_uninstall": [
+    "$fontDir = if ($global) { Join-Path $env:WINDIR 'Fonts' } else { Join-Path $env:LOCALAPPDATA 'Microsoft\\Windows\\Fonts' }",
+    "Get-ChildItem -LiteralPath $dir -Filter '*.ttf' -File | ForEach-Object {",
+    "    $target = Join-Path $fontDir $_.Name",
+    "    if (Test-Path -LiteralPath $target) {",
+    "        try { Rename-Item -LiteralPath $target -NewName $_.Name -ErrorAction Stop }",
+    "        catch { throw \"Cannot remove font '$target'. Close applications using Ioskeley Mono and retry. $($_.Exception.Message)\" }",
+    "    }",
+    "}"
+  ],
+  "uninstaller": {
+    "script": [
+      "$fontDir = if ($global) { Join-Path $env:WINDIR 'Fonts' } else { Join-Path $env:LOCALAPPDATA 'Microsoft\\Windows\\Fonts' }",
+      "$registryRoot = if ($global) { 'HKLM' } else { 'HKCU' }",
+      "$fontKey = \"${registryRoot}:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts\"",
+      "Get-ChildItem -LiteralPath $dir -Filter '*.ttf' -File | ForEach-Object {",
+      "    $target = Join-Path $fontDir $_.Name",
+      "    if (Test-Path -LiteralPath $target) { Remove-Item -LiteralPath $target -Force -ErrorAction Stop }",
+      "    Remove-ItemProperty -Path $fontKey -Name ($_.BaseName + ' (TrueType)') -Force -ErrorAction SilentlyContinue",
+      "}"
+    ]
+  },
+  "notes": [
+    "Restart applications to refresh their font lists; sign out and back in if necessary.",
+    "Font family: IoskeleyMonoTerm Nerd Font / IoskeleyMonoTerm Nerd Font Mono. This package installs 40 Normal-width styles.",
+    "Close applications using these fonts before updating or uninstalling."
+  ],
+  "checkver": "github",
+  "autoupdate": {
+    "url": "https://github.com/ahatem/IoskeleyMono/releases/download/v$version/IoskeleyMono-Term-NerdFont.zip"
+  }
+}

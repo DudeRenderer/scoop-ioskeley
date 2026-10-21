@@ -1,6 +1,6 @@
 # Ioskeley Mono Scoop bucket
 
-通过 [Scoop](https://scoop.sh/) 安装 [Ioskeley Mono](https://github.com/ahatem/IoskeleyMono)。
+通过 [Scoop](https://scoop.sh/) 安装 [Ioskeley Mono](https://github.com/ahatem/IoskeleyMono) 的 Standard、Term、NL 和 Nerd Font 字体。
 
 ## 安装
 
@@ -9,33 +9,67 @@ scoop bucket add ioskeley https://github.com/DudeRenderer/scoop-ioskeley.git
 scoop install ioskeley/ioskeley-mono
 ```
 
-重启编辑器，在字体选择框中使用 `Ioskeley Mono`。
-如果应用仍未显示该字体，可注销 Windows 后重新登录。
+按需选择以下安装包。所有包均使用 Normal 宽度；普通字体使用 Hinted。
+SemiCondensed 和普通字体的 Unhinted 版本不在这些包的安装范围内。
 
-## 安装内容
+| Scoop 包名 | 字体选择框中的名称 | TTF 数量 |
+| --- | --- | ---: |
+| `ioskeley-mono` | `Ioskeley Mono` | 20 |
+| `ioskeley-mono-term` | `Ioskeley Mono Term` | 20 |
+| `ioskeley-mono-nl` | `Ioskeley Mono NL` | 20 |
+| `ioskeley-mono-nerd-font` | `IoskeleyMono Nerd Font`、`IoskeleyMono Nerd Font Mono` | 40 |
+| `ioskeley-mono-term-nerd-font` | `IoskeleyMonoTerm Nerd Font`、`IoskeleyMonoTerm Nerd Font Mono` | 40 |
+| `ioskeley-mono-nl-nerd-font` | `IoskeleyMonoNL Nerd Font`、`IoskeleyMonoNL Nerd Font Mono` | 40 |
 
-- 从上游固定版本的 `IoskeleyMono.zip` 下载，并校验 SHA256；本仓库不托管字体文件。
-- 仅安装 `Normal/Hinted` 下的 20 个 TTF（10 种字重，正体及斜体），包含编程连字。
-- 不包含 Nerd Font 图标。Hinted/Unhinted 中有同名字体，因此只安装 Hinted。
-- 默认安装到当前用户的 Windows 字体目录，无需管理员权限（Windows 10 1809 及以上）。
-- 支持在管理员 PowerShell 中使用 `scoop install -g ioskeley/ioskeley-mono` 安装到所有用户字体目录。
+- Standard：通用编辑器字体，含编程连字。
+- Term：调整箭头和框线，适合终端，含编程连字。
+- NL：不包含编程连字。
+- Nerd Font（NF）：包含图标，部分图标可超过单字符宽度。
+- Nerd Font Mono（NFM）：图标保持单字符宽度。每个 Nerd Font 包同时安装 NF 与 NFM。
+- 每个字体家族包含 10 种字重及各自的正体、斜体。六个包共提供九个家族、180 个 TTF。
+- Nerd Font 的真实 family 名称中 `IoskeleyMono`、`IoskeleyMonoTerm` 和 `IoskeleyMonoNL` 不含内部空格。
+
+例如安装终端 Nerd Font：
+
+```powershell
+scoop install ioskeley/ioskeley-mono-term-nerd-font
+```
+
+一次安装全部六个包：
+
+```powershell
+$packages = @(
+    'ioskeley/ioskeley-mono'
+    'ioskeley/ioskeley-mono-term'
+    'ioskeley/ioskeley-mono-nl'
+    'ioskeley/ioskeley-mono-nerd-font'
+    'ioskeley/ioskeley-mono-term-nerd-font'
+    'ioskeley/ioskeley-mono-nl-nerd-font'
+)
+scoop install @packages
+```
+
+重启编辑器，在字体选择框中使用表中的名称。
+如果应用仍未显示新字体，可注销 Windows 后重新登录。
+
+## 安装行为
+
+从上游固定版本的 Releases 下载，并校验 SHA256；本仓库不托管字体文件。
+默认安装到当前用户的 Windows 字体目录，无需管理员权限（Windows 10 1809 及以上）。
+在管理员 PowerShell 中加入 `-g` 参数可安装到所有用户字体目录。
+各包拥有不同的字体文件名，可以同时安装、分别卸载。
 
 ## 更新与卸载
 
-先关闭使用该字体的应用。
+先关闭使用相关字体的应用。下列示例以终端 Nerd Font 为例：
 
 ```powershell
 scoop update
-scoop update ioskeley-mono
+scoop update ioskeley-mono-term-nerd-font
+scoop uninstall ioskeley-mono-term-nerd-font
 ```
 
-卸载字体及对应的注册表条目：
-
-```powershell
-scoop uninstall ioskeley-mono
-```
-
-取消 bucket：
+卸载会删除对应的字体文件及注册表条目。取消 bucket：
 
 ```powershell
 scoop bucket rm ioskeley
@@ -49,27 +83,22 @@ scoop bucket rm ioskeley
 
 ```powershell
 $scoopPath = scoop prefix scoop
-& "$scoopPath\bin\checkver.ps1" -App ioskeley-mono -Dir .\bucket -Update
-git diff -- bucket/ioskeley-mono.json
+& "$scoopPath\bin\checkver.ps1" -App '*' -Dir .\bucket -Update
+git diff -- bucket
 ```
 
 该命令检测最新正式 GitHub Release，并更新版本、下载 URL 和 SHA256。
-发布前确认新 ZIP 的 `Normal/Hinted` 目录仍存在，并验证安装/卸载。
+发布前应确认普通 ZIP 的 `Normal/Hinted` 和 Nerd Font ZIP 的 `Normal` 目录结构未变，
+并验证安装/卸载。
 
 ```powershell
-git add bucket/ioskeley-mono.json
-git commit -m "Update Ioskeley Mono"
+git add bucket
+git commit -m "Update Ioskeley Mono fonts"
 git push
 ```
 
 `checkver` 和 `autoupdate` 是供维护者更新清单的规则，不会自行定时执行。
 本仓库没有配置定时任务。用户执行 `scoop update` 时获取的是此仓库已经提交的清单。
-
-## 其他字体变体
-
-上游还有 Term、NL 和各自的 Nerd Font 发布包。建议为不同字体家族创建独立 JSON。
-需要同时更改包名、描述、下载 URL、SHA256、解压目录与 autoupdate URL，
-并检查目标 ZIP 的实际结构；不要只改下载链接或递归安装整个标准 ZIP。
 
 ## 参考
 
